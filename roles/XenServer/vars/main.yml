@@ -1,0 +1,11 @@
+---
+template_name: 'NicolasLa-test'
+network_uid: '5dd095f3-bccc-b10f-0dc9-1081262b4085'
+primary_sr_uid: '7ddac167-ef1a-2bf3-ad97-674c5609ad62'
+ram: 4294967296
+vcpus: 4
+IP: 'xxx.xxx.xxx.xxx'
+gateway: 'xxx.xxx.xxx.xxx'
+netmask: 'xxx.xxx.xxx.xxx'
+nameserver1: 'xxx.xxx.xxx.xxx'
+nameserver2: 'xxx.xxx.xxx.xxx'

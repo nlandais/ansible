@@ -1,0 +1,80 @@
+- hosts: localhost
+  become: no
+  connection: local
+  gather_facts: yes
+  # vars_files:
+  #   - "roles/common/vars/{{ ansible_distribution }}.yml"
+  vars:
+    python_extra_modules: [ 'ec2_vpc_net_facts',
+                            'ec2_vpc_subnet_facts',
+                            'ec2_eni_facts',
+                            'ec2_elb_facts',
+                            'dynamodb_table',
+                            'sqs_queue',
+                            'ec2_remote_facts'
+                          ]
+
+    custom_win_modules: [ 'win_iis_webbinding',
+                           'win_join_domain',
+                           'win_iis_webapppool',
+                           'win_s3'
+                        ]
+
+    python_modules: [ 'lambda' ]
+
+    win_modules: [ 'win_webpicmd',
+                    'win_updates',
+                    'win_unzip',
+                    'win_chocolatey',
+                    'win_regedit',
+                    'win_iis_website',
+                    'win_scheduled_task',
+                    'win_environment',
+                    'win_acl',
+                    'win_share',
+                    'win_package'
+                  ]
+  tasks:
+    - name: Create library directory
+      file: path="{{ playbook_dir }}/library" state=directory
+
+    - name: Download extra python modules
+      get_url:
+        url: "https://raw.githubusercontent.com/ansible/ansible-modules-extras/devel/cloud/amazon/{{ item }}.py"
+        dest: "{{ playbook_dir }}/library/{{ item }}.py"
+        force: yes
+      with_items:
+        - '{{ python_extra_modules }}'
+
+    - name: Python module for ec2 ip address management
+      get_url:
+        url: "https://raw.githubusercontent.com/Etherdaemon/ansible-modules-extras/b944686796cad8351efa5e4dbb3de1fd5c9cd530/cloud/amazon/ec2_addresses.py"
+        dest: "{{ playbook_dir }}/library/ec2_addresses.py"
+        force: yes
+
+    #Download extra modules from private repo (pending PR)
+    - name: Download private windows modules
+      get_url:
+        url: https://raw.githubusercontent.com/nlandais/ansible-modules-ctxs/master/{{ item[0] }}.{{ item[1] }}
+        dest: "{{ playbook_dir }}/library/{{ item[0] }}.{{ item[1] }}"
+        force: yes
+      with_nested:
+        - '{{ custom_win_modules }}'
+        - [ 'ps1', 'py' ]
+
+    - name: Download private python modules
+      get_url:
+        url: https://raw.githubusercontent.com/nlandais/ansible-modules-ctxs/master/{{ item }}.py
+        dest: "{{ playbook_dir }}/library/{{ item }}.py"
+        force: yes
+      with_items:
+        - '{{ python_modules }}'
+
+    - name: Download windows extra modules
+      get_url:
+        url: https://raw.githubusercontent.com/ansible/ansible-modules-extras/devel/windows/{{ item[0] }}.{{ item[1] }}
+        dest: "{{ playbook_dir }}/library/{{ item[0] }}.{{ item[1] }}"
+        force: yes
+      with_nested:
+        - '{{ win_modules }}'
+        - [ 'ps1', 'py' ]

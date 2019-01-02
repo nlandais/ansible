@@ -1,0 +1,42 @@
+---
+- name: Create VM
+  command: xe vm-clone vm="{{ template_name }}" new-name-label="{{ instance_name }}"
+  register: vm
+
+- name: Set is-a-template variable to false
+  command: xe vm-param-set is-a-template=false uuid="{{ vm.stdout }}"
+
+- name: Assign a network
+  command: xe vif-create vm-uuid="{{ vm.stdout }}" network-uuid="{{ network_uid }}" device=0
+
+- name: Get VM MAC address
+  shell: xe vif-list device=0 vm-uuid='{{ vm.stdout }}' params=MAC | grep -o '[A-Za-z0-9:]\{17\}'
+  register: mac
+
+- name: Add hostname to the VM xenstore-data
+  command: xe vm-param-set uuid="{{ vm.stdout }}" xenstore-data:vm-data/hostname="{{ instance_name }}"
+
+- name: Add MAC address to the VM xenstore-data
+  command: xe vm-param-set uuid="{{ vm.stdout }}" xenstore-data:vm-data/ifs/0/mac="{{ mac.stdout }}"
+
+- name: Assign IP
+  command: xe vm-param-set uuid="{{ vm.stdout }}" xenstore-data:vm-data/ifs/0/ip="{{ IP }}"
+
+- name: Gateway address
+  command: xe vm-param-set uuid="{{ vm.stdout }}" xenstore-data:vm-data/ifs/0/gateway="{{ gateway }}"
+
+- name: Netmask  
+  command: xe vm-param-set uuid="{{ vm.stdout }}" xenstore-data:vm-data/ifs/0/netmask="{{ netmask }}"
+
+- name: Nameserver 1
+  command: xe vm-param-set uuid="{{ vm.stdout }}" xenstore-data:vm-data/ifs/0/nameserver1="{{ nameserver1 }}"
+
+- name: Nameserver 2  
+  command: xe vm-param-set uuid="{{ vm.stdout }}" xenstore-data:vm-data/ifs/0/nameserver2="{{ nameserver2 }}"
+
+- name: Set the VM RAM limits
+  command: xe vm-memory-limits-set vm="{{ vm.stdout }}" static-min="{{ ram }}" static-max="{{ ram }}" dynamic-min="{{ ram }}" dynamic-max="{{ ram }}"
+
+- name: Launch the VM
+  command: xe vm-start uuid="{{ vm.stdout }}"
+  notify: timer
